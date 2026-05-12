@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Saknad funktion i ackordföljd</title>
+  <style>
+    :root {
+      --bg: #f5f5f4;
+      --card: #ffffff;
+      --text: #1c1917;
+      --muted: #78716c;
+      --border: #e7e5e4;
+      --accent: #2563eb;
+      --good: #16a34a;
+      --bad: #dc2626;
+      --soft: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #f8fafc, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 6vw, 42px);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+    }
+
+    p { color: var(--muted); line-height: 1.5; }
+
+    .controls, .answers, .stats, .pattern {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .answers {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pattern {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 650px) {
+      .answers, .pattern { grid-template-columns: 1fr; }
+    }
+
+    button, select {
+      border: 0;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      background: var(--soft);
+      color: var(--text);
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover { filter: brightness(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .answer {
+      min-height: 104px;
+      font-size: 26px;
+      border: 2px solid var(--border);
+      background: white;
+      line-height: 1.15;
+    }
+
+    .answer.correct {
+      background: var(--good);
+      color: white;
+      border-color: var(--good);
+    }
+
+    .answer.wrong {
+      background: var(--bad);
+      color: white;
+      border-color: var(--bad);
+    }
+
+    .slot {
+      min-height: 76px;
+      border-radius: 22px;
+      background: var(--soft);
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .slot.missing {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 2px dashed #93c5fd;
+    }
+
+    .feedback {
+      display: none;
+      border-radius: 22px;
+      padding: 18px;
+      font-weight: 700;
+    }
+
+    .feedback.good {
+      display: block;
+      background: #dcfce7;
+      color: #14532d;
+    }
+
+    .feedback.bad {
+      display: block;
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pill {
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .stats {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stat {
+      background: var(--soft);
+      border-radius: 20px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      color: var(--text);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .small { font-size: 14px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="card">
+      <div class="small">Saknad funktion · betaversion</div>
+      <h1>Vilken funktion saknas?</h1>
+      <p>
+        Först spelas tonika som isolerad klang, sedan en snabb durskala. Efter två sekunders paus spelas en ackordföljd med en saknad funktion.
+        Ackorden spelas med minsta möjliga rörelse i överstämmorna och med grundtonerna i basen.
+      </p>
+    </header>
+
+    <section class="card">
+      <div class="controls">
+        <button class="primary" id="newBtn">Ny uppgift</button>
+        <button id="repeatBtn" disabled>Spela igen</button>
+        <button id="resetBtn">Nollställ</button>
+      </div>
+
+      <div style="height: 14px"></div>
+
+      <div class="controls">
+        <label>
+          Ljud
+          <select id="soundType">
+            <option value="piano" selected>Piano</option>
+            <option value="sine">Mjukt</option>
+            <option value="triangle">Klart</option>
+            <option value="square">Orgel</option>
+            <option value="sawtooth">Stråkigt</option>
+          </select>
+        </label>
+
+        <label>
+          Omfång
+          <select id="rangeType">
+            <option value="baritone" selected>Baryton</option>
+            <option value="alto">Alt</option>
+          </select>
+        </label>
+
+        <label>
+          Tempo
+          <select id="tempoType">
+            <option value="slow">Långsam</option>
+            <option value="medium" selected>Medel</option>
+            <option value="fast">Snabb</option>
+          </select>
+        </label>
+
+        <label>
+          Svårighet
+          <select id="difficulty">
+            <option value="easy" selected>Enkel: T, S, D</option>
+            <option value="extended">Utökad: även Tp, Sp, Dp</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div class="pill" id="status">Tryck på Ny uppgift för att starta</div>
+        <div class="pill" id="hiddenInfo">Svaret visas efter svar</div>
+      </div>
+
+      <div style="height: 18px"></div>
+
+      <div class="pattern" id="pattern">
+        <div class="slot">–</div>
+        <div class="slot">–</div>
+        <div class="slot missing">?</div>
+        <div class="slot">–</div>
+      </div>
+
+      <div style="height: 18px"></div>
+
+      <div class="answers" id="answers">
+        <button class="answer" data-answer="T">T<br><span class="small">Tonika</span></button>
+        <button class="answer" data-answer="S">S<br><span class="small">Subdominant</span></button>
+        <button class="answer" data-answer="D">D<br><span class="small">Dominant</span></button>
+      </div>
+
+      <div style="height: 18px"></div>
+
+      <div id="feedback" class="feedback"></div>
+    </section>
+
+    <section class="card">
+      <div class="stats">
+        <div class="stat"><strong id="correct">0</strong><span class="small">rätt</span></div>
+        <div class="stat"><strong id="total">0</strong><span class="small">försök</span></div>
+        <div class="stat"><strong id="percent">0%</strong><span class="small">träffsäkerhet</span></div>
+      </div>
+    </section>
+
+    <footer style="text-align:center; padding: 8px 0 2px; color:#78716c; font-size:12px; font-style:italic;">
+      Betaversion · Marcus Löfdahl 2026 (genererad av AI)
+    </footer>
+  </main>
+
+  <script>
+    const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+    const KEY_ROOTS = [0, 2, 4, 5, 7, 9, 10];
+
+    const FUNCTIONS = {
+      T:  { label: "Tonika", degree: 0,  quality: "major", roman: "I" },
+      S:  { label: "Subdominant", degree: 5,  quality: "major", roman: "IV" },
+      D:  { label: "Dominant", degree: 7,  quality: "major", roman: "V" },
+      Tp: { label: "Tonikaparallell", degree: 9, quality: "minor", roman: "vi" },
+      Sp: { label: "Subdominantparallell", degree: 2, quality: "minor", roman: "ii" },
+      Dp: { label: "Dominantparallell", degree: 4, quality: "minor", roman: "iii" }
+    };
+
+    const EASY_PROGRESSIONS = [
+      ["T", "S", "D", "T"],
+      ["T", "D", "S", "T"],
+      ["T", "S", "T", "D"],
+      ["T", "D", "T", "S"],
+      ["S", "D", "T", "S"],
+      ["D", "T", "S", "D"],
+      ["T", "T", "S", "D"],
+      ["T", "S", "S", "D"],
+      ["T", "D", "D", "T"]
+    ];
+
+    const EXTENDED_PROGRESSIONS = [
+      ["T", "Tp", "S", "D"],
+      ["T", "Sp", "D", "T"],
+      ["T", "S", "Dp", "T"],
+      ["T", "D", "Tp", "S"],
+      ["Tp", "S", "D", "T"],
+      ["T", "Dp", "S", "D"],
+      ["S", "Sp", "D", "T"],
+      ["T", "Tp", "Sp", "D"]
+    ];
+
+    let audioCtx = null;
+    let exercise = null;
+    let answered = false;
+    let score = { correct: 0, total: 0 };
+
+    const newBtn = document.getElementById("newBtn");
+    const repeatBtn = document.getElementById("repeatBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const soundTypeEl = document.getElementById("soundType");
+    const rangeTypeEl = document.getElementById("rangeType");
+    const difficultyEl = document.getElementById("difficulty");
+    const tempoTypeEl = document.getElementById("tempoType");
+    const statusEl = document.getElementById("status");
+    const hiddenInfoEl = document.getElementById("hiddenInfo");
+    const feedbackEl = document.getElementById("feedback");
+    const correctEl = document.getElementById("correct");
+    const totalEl = document.getElementById("total");
+    const percentEl = document.getElementById("percent");
+    const answersEl = document.getElementById("answers");
+    const patternEl = document.getElementById("pattern");
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function applyEnvelope(gain, start, duration, volume, sound) {
+      gain.gain.cancelScheduledValues(start);
+      gain.gain.setValueAtTime(0.0001, start);
+      if (sound === "piano") {
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(volume * 0.42, start + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      } else {
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      }
+    }
+
+    function playOsc(ctx, type, midi, start, duration, volume, detune) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = type;
+      osc.frequency.value = midiToFreq(midi);
+      osc.detune.value = detune || 0;
+      filter.type = "lowpass";
+      filter.frequency.value = type === "sawtooth" ? 1300 : 2600;
+      applyEnvelope(gain, start, duration, volume, soundTypeEl.value);
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.08);
+    }
+
+    function playTone(ctx, midi, start, duration, volume) {
+      const sound = soundTypeEl.value;
+      if (sound === "piano") {
+        playOsc(ctx, "triangle", midi, start, duration, volume, 0);
+        playOsc(ctx, "sine", midi + 12, start, duration * 0.75, volume * 0.25, 2);
+        playOsc(ctx, "sine", midi + 19, start, duration * 0.55, volume * 0.10, -3);
+        return;
+      }
+      playOsc(ctx, sound, midi, start, duration, volume, 0);
+    }
+
+    function pitchClass(midi) {
+      return ((midi % 12) + 12) % 12;
+    }
+
+    function nearestPitchForPc(pc, around) {
+      let best = pc + 60;
+      let bestDist = Infinity;
+      for (let octave = 2; octave <= 6; octave++) {
+        const m = pc + 12 * (octave + 1);
+        const d = Math.abs(m - around);
+        if (d < bestDist) {
+          best = m;
+          bestDist = d;
+        }
+      }
+      return best;
+    }
+
+    function chordPcsForFunction(keyPc, fn) {
+      const f = FUNCTIONS[fn];
+      const root = (keyPc + f.degree) % 12;
+      const third = f.quality === "major" ? 4 : 3;
+      return [root, (root + third) % 12, (root + 7) % 12];
+    }
+
+    function initialVoicing(keyPc, fn) {
+      const pcs = chordPcsForFunction(keyPc, fn);
+      const center = rangeTypeEl.value === "alto" ? 64 : 55;
+      const notes = pcs.map((pc, i) => nearestPitchForPc(pc, center + i * 2)).sort((a, b) => a - b);
+      return notes;
+    }
+
+    function closestVoicing(prev, keyPc, fn) {
+      const pcs = chordPcsForFunction(keyPc, fn);
+      const candidates = pcs.map(pc => {
+        let best = nearestPitchForPc(pc, 60);
+        let bestScore = Infinity;
+        for (let octave = 2; octave <= 6; octave++) {
+          const m = pc + 12 * (octave + 1);
+          const scores = prev.map(p => Math.abs(m - p));
+          const score = Math.min(...scores);
+          if (score < bestScore) {
+            best = m;
+            bestScore = score;
+          }
+        }
+        return best;
+      });
+
+      const all = [];
+      function build(i, current) {
+        if (i === pcs.length) {
+          const sorted = current.slice().sort((a, b) => a - b);
+          const span = sorted[sorted.length - 1] - sorted[0];
+          if (span <= 16) all.push(sorted);
+          return;
+        }
+        const pc = pcs[i];
+        for (let octave = 2; octave <= 6; octave++) {
+          build(i + 1, current.concat(pc + 12 * (octave + 1)));
+        }
+      }
+      build(0, []);
+
+      let best = candidates.sort((a, b) => a - b);
+      let bestCost = Infinity;
+      all.forEach(v => {
+        let cost = 0;
+        for (let i = 0; i < Math.min(v.length, prev.length); i++) cost += Math.abs(v[i] - prev[i]);
+        cost += Math.abs((v[0] + v[1] + v[2]) / 3 - (prev[0] + prev[1] + prev[2]) / 3) * 0.3;
+        if (cost < bestCost) {
+          best = v;
+          bestCost = cost;
+        }
+      });
+      return best;
+    }
+
+    function bassForFunction(keyPc, fn) {
+      const rootPc = (keyPc + FUNCTIONS[fn].degree) % 12;
+      const base = rangeTypeEl.value === "alto" ? 48 : 36;
+      return base + ((rootPc - (base % 12) + 12) % 12);
+    }
+
+    function buildProgressionVoicings(keyPc, progression) {
+      const voicings = [];
+      let prev = initialVoicing(keyPc, progression[0]);
+      progression.forEach((fn, i) => {
+        const upper = i === 0 ? prev : closestVoicing(prev, keyPc, fn);
+        prev = upper;
+        voicings.push([bassForFunction(keyPc, fn)].concat(upper));
+      });
+      return voicings;
+    }
+
+    function playChord(ctx, notes, start, duration) {
+      notes.forEach((note, i) => {
+        const volume = i === 0 ? 0.14 : 0.062;
+        playTone(ctx, note, start, duration, volume);
+      });
+    }
+
+    function playScale(ctx, keyPc, start) {
+      const majorScale = [0, 2, 4, 5, 7, 9, 11, 12];
+      const base = rangeTypeEl.value === "alto" ? 60 : 48;
+      const tonic = base + ((keyPc - (base % 12) + 12) % 12);
+      majorScale.forEach((step, i) => {
+        const isLast = i === majorScale.length - 1;
+        playTone(
+          ctx,
+          tonic + step,
+          start + i * 0.15,
+          isLast ? 0.95 : 0.34,
+          isLast ? 0.16 : 0.13
+        );
+      });
+    }
+
+    function makeExercise() {
+      const keyPc = pick(KEY_ROOTS);
+      const bank = difficultyEl.value === "extended" ? EASY_PROGRESSIONS.concat(EXTENDED_PROGRESSIONS) : EASY_PROGRESSIONS;
+      const progression = pick(bank).slice();
+      const missingIndex = pick([1, 2]);
+      const answer = progression[missingIndex];
+      const voicings = buildProgressionVoicings(keyPc, progression);
+      return { keyPc, progression, missingIndex, answer, voicings };
+    }
+
+    async function playExercise() {
+      if (!exercise) return;
+      const ctx = getAudioCtx();
+      await ctx.resume();
+
+      const now = ctx.currentTime + 0.05;
+      const tonic = buildProgressionVoicings(exercise.keyPc, ["T"])[0];
+      playChord(ctx, tonic, now, 1.2);
+      playScale(ctx, exercise.keyPc, now + 1.45);
+
+      const progressionStart = now + 1.45 + 8 * 0.13 + 2.0;
+      const tempo = tempoTypeEl.value;
+      const spacing = tempo === "slow" ? 1.55 : tempo === "fast" ? 0.72 : 1.05;
+      const duration = tempo === "slow" ? 1.35 : tempo === "fast" ? 0.58 : 0.95;
+
+      exercise.voicings.forEach((voicing, i) => {
+        playChord(ctx, voicing, progressionStart + i * spacing, duration);
+      });
+    }
+
+    function renderAnswers() {
+      const keys = difficultyEl.value === "extended" ? ["T", "S", "D", "Tp", "Sp", "Dp"] : ["T", "S", "D"];
+      answersEl.innerHTML = keys.map(k => {
+        const f = FUNCTIONS[k];
+        return `<button class="answer" data-answer="${k}">${k}<br><span class="small">${f.label}</span></button>`;
+      }).join("");
+      Array.from(document.querySelectorAll(".answer")).forEach(btn => btn.addEventListener("click", () => answer(btn.dataset.answer)));
+    }
+
+    function renderPattern(showAnswer) {
+      if (!exercise) {
+        patternEl.innerHTML = `<div class="slot">–</div><div class="slot">–</div><div class="slot missing">?</div><div class="slot">–</div>`;
+        return;
+      }
+      patternEl.innerHTML = exercise.progression.map((fn, i) => {
+        const isMissing = i === exercise.missingIndex;
+        const text = isMissing && !showAnswer ? "?" : fn;
+        return `<div class="slot ${isMissing ? "missing" : ""}">${text}</div>`;
+      }).join("");
+    }
+
+    function clearAnswerStyles() {
+      Array.from(document.querySelectorAll(".answer")).forEach(btn => {
+        btn.classList.remove("correct", "wrong");
+        btn.disabled = false;
+      });
+      feedbackEl.className = "feedback";
+      feedbackEl.textContent = "";
+    }
+
+    async function newExercise() {
+      renderAnswers();
+      exercise = makeExercise();
+      answered = false;
+      clearAnswerStyles();
+      repeatBtn.disabled = false;
+      renderPattern(false);
+      const tempoLabel = tempoTypeEl.value === "slow" ? "långsam" : tempoTypeEl.value === "fast" ? "snabb" : "medel";
+      statusEl.textContent = "Lyssna: tonika, snabb durskala, paus, " + tempoLabel + " ackordföljd.";
+      hiddenInfoEl.textContent = "Svaret visas efter svar";
+      await playExercise();
+    }
+
+    function answer(choice) {
+      if (!exercise || answered) return;
+      answered = true;
+
+      const isCorrect = choice === exercise.answer;
+      score.total += 1;
+      if (isCorrect) score.correct += 1;
+
+      Array.from(document.querySelectorAll(".answer")).forEach(btn => {
+        const value = btn.dataset.answer;
+        btn.disabled = true;
+        if (value === exercise.answer) btn.classList.add("correct");
+        if (value === choice && !isCorrect) btn.classList.add("wrong");
+      });
+
+      const keyName = NOTE_NAMES[exercise.keyPc];
+      const answerInfo = FUNCTIONS[exercise.answer];
+      renderPattern(true);
+
+      feedbackEl.className = "feedback " + (isCorrect ? "good" : "bad");
+      feedbackEl.textContent = isCorrect
+        ? "Rätt! Den saknade funktionen var " + exercise.answer + " – " + answerInfo.label + "."
+        : "Inte riktigt. Den saknade funktionen var " + exercise.answer + " – " + answerInfo.label + ".";
+
+      hiddenInfoEl.textContent = "Tonart: " + keyName + " dur | Följd: " + exercise.progression.join(" – ");
+      statusEl.textContent = "Tryck på Ny uppgift för nästa fråga.";
+      updateScore();
+    }
+
+    function updateScore() {
+      const percent = score.total ? Math.round((score.correct / score.total) * 100) : 0;
+      correctEl.textContent = score.correct;
+      totalEl.textContent = score.total;
+      percentEl.textContent = percent + "%";
+    }
+
+    function reset() {
+      exercise = null;
+      answered = false;
+      score = { correct: 0, total: 0 };
+      repeatBtn.disabled = true;
+      renderAnswers();
+      clearAnswerStyles();
+      renderPattern(false);
+      updateScore();
+      statusEl.textContent = "Tryck på Ny uppgift för att starta";
+      hiddenInfoEl.textContent = "Svaret visas efter svar";
+    }
+
+    difficultyEl.addEventListener("change", () => {
+      renderAnswers();
+      renderPattern(false);
+    });
+    newBtn.addEventListener("click", newExercise);
+    repeatBtn.addEventListener("click", playExercise);
+    resetBtn.addEventListener("click", reset);
+    renderAnswers();
+  </script>
+</body>
+</html>

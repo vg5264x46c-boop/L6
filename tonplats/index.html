@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tonplats-melodi</title>
+  <style>
+    :root {
+      --bg:#f5f5f4; --card:#fff; --text:#1c1917; --muted:#78716c;
+      --border:#e7e5e4; --accent:#2563eb; --good:#16a34a; --bad:#dc2626; --soft:#f1f5f9;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:linear-gradient(135deg,#f8fafc,var(--bg)); color:var(--text); min-height:100vh; padding:16px;
+    }
+    main { max-width:860px; margin:0 auto; display:grid; gap:16px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:28px; padding:22px; box-shadow:0 10px 25px rgba(0,0,0,.04); }
+    h1 { margin:0; font-size:clamp(28px,6vw,42px); line-height:1.04; letter-spacing:-.04em; }
+    p { color:var(--muted); line-height:1.5; }
+    .small { font-size:14px; color:var(--muted); }
+    .controls, .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+    button, select {
+      border:0; border-radius:18px; padding:16px 18px; font-size:16px; font-weight:700;
+      background:var(--soft); color:var(--text); cursor:pointer; width:100%;
+    }
+    button:hover { filter:brightness(.97); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .primary { background:var(--accent); color:#fff; }
+    label { display:grid; gap:6px; font-size:13px; font-weight:800; color:var(--muted); }
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+    .pill { background:var(--soft); border-radius:999px; padding:10px 14px; color:var(--muted); font-weight:700; }
+    .toneGrid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+    .toneBtn { min-height:76px; font-size:28px; background:white; border:2px solid var(--border); }
+    @media (max-width:650px) { .toneGrid { grid-template-columns:repeat(3,1fr); } }
+    .preview {
+      min-height:72px; border:2px dashed var(--border); border-radius:18px; padding:16px;
+      display:flex; align-items:center; justify-content:center; background:white; font-size:28px; font-weight:900;
+    }
+    .feedback { display:none; border-radius:22px; padding:18px; font-weight:700; }
+    .feedback.good { display:block; background:#dcfce7; color:#14532d; }
+    .feedback.bad { display:block; background:#fee2e2; color:#7f1d1d; }
+    .stat { background:var(--soft); border-radius:20px; padding:16px; text-align:center; }
+    .stat strong { display:block; font-size:28px; color:var(--text); }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="card">
+      <div class="small">Tonplats-melodi · betaversion</div>
+      <h1>Vilken tonplatsmelodi hör du?</h1>
+      <p>
+        Först spelas tonikaackordet och en legato-durskala. Sedan spelas en kort legato-melodi.
+        Klicka tonplatserna i rätt ordning. Melodin använder 1–5 samt låg 7 som inledningstonsmaterial.
+      </p>
+    </header>
+
+    <section class="card">
+      <div class="controls">
+        <button class="primary" id="newBtn">Ny uppgift</button>
+        <button id="repeatBtn" disabled>Spela igen</button>
+        <button id="resetBtn">Nollställ</button>
+      </div>
+      <div style="height:14px"></div>
+      <div class="controls">
+        <label>Ljud
+          <select id="soundType">
+            <option value="piano" selected>Piano</option>
+            <option value="sine">Mjukt</option>
+            <option value="triangle">Klart</option>
+            <option value="square">Orgel</option>
+            <option value="sawtooth">Stråkigt</option>
+          </select>
+        </label>
+        <label>Omfång
+          <select id="rangeType">
+            <option value="baritone" selected>Baryton</option>
+            <option value="alto">Alt</option>
+          </select>
+        </label>
+        <label>
+          Svarssätt
+          <select id="answerMode">
+            <option value="click" selected>Klicka själv</option>
+            <option value="choices">Välj färdig serie</option>
+          </select>
+        </label>
+
+        <label>Tempo
+          <select id="tempoType">
+            <option value="slow">Långsam</option>
+            <option value="medium" selected>Medel</option>
+            <option value="fast">Snabb</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div class="pill" id="status">Tryck på Ny uppgift för att starta</div>
+        <div class="pill" id="hiddenInfo">Melodin visas efter svar</div>
+      </div>
+      <div style="height:18px"></div>
+      <div id="choiceArea" style="display:none;"></div>
+
+      <div id="clickArea">
+      <div class="preview" id="sequencePreview">–</div>
+      <div style="height:12px"></div>
+      <div class="toneGrid">
+        <button class="toneBtn" data-tone="7"><span style="display:inline-flex; flex-direction:column; align-items:center; line-height:1;"><span>7</span><span style="width:0.55em; border-bottom:1px solid currentColor; margin-top:0.08em;"></span></span></button>
+        <button class="toneBtn" data-tone="1">1</button>
+        <button class="toneBtn" data-tone="2">2</button>
+        <button class="toneBtn" data-tone="3">3</button>
+        <button class="toneBtn" data-tone="4">4</button>
+        <button class="toneBtn" data-tone="5">5</button>
+      </div>
+      <div style="height:12px"></div>
+      <div class="controls">
+        <button id="backBtn">Ta bort sista</button>
+        <button id="clearBtn">Rensa</button>
+        <button class="primary" id="submitBtn">Svara</button>
+      </div>
+      <div style="height:18px"></div>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+    </section>
+
+    <section class="card">
+      <div class="stats">
+        <div class="stat"><strong id="correct">0</strong><span class="small">rätt</span></div>
+        <div class="stat"><strong id="total">0</strong><span class="small">försök</span></div>
+        <div class="stat"><strong id="percent">0%</strong><span class="small">träffsäkerhet</span></div>
+      </div>
+    </section>
+
+    <footer style="text-align:center; padding:8px 0 2px; color:#78716c; font-size:12px; font-style:italic;">
+      Betaversion · Marcus Löfdahl 2026 (genererad av AI)
+    </footer>
+  </main>
+
+  <script>
+    const NOTE_NAMES = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
+    const KEY_ROOTS = [0,2,4,5,7,9,10];
+    const STEP_TO_SEMITONES = { 1:0, 2:2, 3:4, 4:5, 5:7, 7:-1 };
+
+    const MELODIES = [
+      [1,2,3,2,1], [3,2,1,2,3], [1,3,5,3,1], [2,3,4,3,2],
+      [3,4,5,4,3], [1,2,1,3,2], [2,4,3,2,1], [3,5,4,3,1],
+      [1,7,1,2,3], [2,1,7,1,2], [3,2,1,7,1],  [1,5,3,2,1]
+    ].filter(m => [1,2,3].includes(m[0]));
+
+    let audioCtx = null;
+    let exercise = null;
+    let answered = false;
+    let userSequence = [];
+    let score = { correct:0, total:0 };
+
+    const newBtn = document.getElementById("newBtn");
+    const repeatBtn = document.getElementById("repeatBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const soundTypeEl = document.getElementById("soundType");
+    const rangeTypeEl = document.getElementById("rangeType");
+    const tempoTypeEl = document.getElementById("tempoType");
+    const answerModeEl = document.getElementById("answerMode");
+    const choiceAreaEl = document.getElementById("choiceArea");
+    const clickAreaEl = document.getElementById("clickArea");
+    const statusEl = document.getElementById("status");
+    const hiddenInfoEl = document.getElementById("hiddenInfo");
+    const sequencePreviewEl = document.getElementById("sequencePreview");
+    const feedbackEl = document.getElementById("feedback");
+    const correctEl = document.getElementById("correct");
+    const totalEl = document.getElementById("total");
+    const percentEl = document.getElementById("percent");
+    const backBtn = document.getElementById("backBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const toneButtons = Array.from(document.querySelectorAll(".toneBtn"));
+
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function arraysEqual(a,b) { return JSON.stringify(a) === JSON.stringify(b); }
+    function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function applyEnvelope(gain, start, duration, volume, sound) {
+      gain.gain.cancelScheduledValues(start);
+      gain.gain.setValueAtTime(0.0001, start);
+      if (sound === "piano") {
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(volume * 0.42, start + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      } else {
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      }
+    }
+
+    function playOsc(ctx, type, midi, start, duration, volume, detune) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = type;
+      osc.frequency.value = midiToFreq(midi);
+      osc.detune.value = detune || 0;
+      filter.type = "lowpass";
+      filter.frequency.value = type === "sawtooth" ? 1300 : 2600;
+      applyEnvelope(gain, start, duration, volume, soundTypeEl.value);
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.08);
+    }
+
+    function playTone(ctx, midi, start, duration, volume) {
+      const sound = soundTypeEl.value;
+      if (sound === "piano") {
+        playOsc(ctx, "triangle", midi, start, duration, volume, 0);
+        playOsc(ctx, "sine", midi + 12, start, duration * 0.75, volume * 0.25, 2);
+        playOsc(ctx, "sine", midi + 19, start, duration * 0.55, volume * 0.10, -3);
+      } else {
+        playOsc(ctx, sound, midi, start, duration, volume, 0);
+      }
+    }
+
+    function tonicMidi(keyPc, registerBase) {
+      return registerBase + ((keyPc - (registerBase % 12) + 12) % 12);
+    }
+
+    function playTonicChord(ctx, keyPc, start) {
+      const base = rangeTypeEl.value === "alto" ? 60 : 48;
+      const root = tonicMidi(keyPc, base);
+      [root - 12, root, root + 4, root + 7].forEach((midi, i) => {
+        playTone(ctx, midi, start, 1.2, i === 0 ? 0.13 : 0.07);
+      });
+    }
+
+    function playScale(ctx, keyPc, start) {
+      const base = rangeTypeEl.value === "alto" ? 60 : 48;
+      const root = tonicMidi(keyPc, base);
+      const scale = [0,2,4,5,7,9,11,12];
+      scale.forEach((step, i) => {
+        const isLast = i === scale.length - 1;
+        playTone(ctx, root + step, start + i * 0.15, isLast ? 0.95 : 0.34, isLast ? 0.16 : 0.13);
+      });
+    }
+
+    function melodyToMidi(keyPc, melody) {
+      const base = rangeTypeEl.value === "alto" ? 60 : 48;
+      const root = tonicMidi(keyPc, base);
+      return melody.map(step => root + STEP_TO_SEMITONES[step]);
+    }
+
+    function makeExercise() {
+      const keyPc = pick(KEY_ROOTS);
+      const melody = pick(MELODIES).slice();
+      const distractors = [];
+
+      while (distractors.length < 2) {
+        const d = pick(MELODIES);
+        if (JSON.stringify(d) !== JSON.stringify(melody) && !distractors.find(x => JSON.stringify(x) === JSON.stringify(d))) {
+          distractors.push(d);
+        }
+      }
+
+      const choices = [melody, ...distractors].sort(() => Math.random() - 0.5);
+
+      return { keyPc, melody, midi: melodyToMidi(keyPc, melody), choices };
+    }
+
+    async function playExercise(includeSetup = true) {
+      if (!exercise) return;
+      const ctx = getAudioCtx();
+      await ctx.resume();
+
+      const now = ctx.currentTime + 0.05;
+      let melodyStart = now;
+
+      if (includeSetup) {
+        playTonicChord(ctx, exercise.keyPc, now);
+        playScale(ctx, exercise.keyPc, now + 1.45);
+        melodyStart = now + 4.9;
+      }
+
+      const tempo = tempoTypeEl.value;
+      const spacing = tempo === "slow" ? 0.72 : tempo === "fast" ? 0.34 : 0.5;
+      const duration = tempo === "slow" ? 1.28 : tempo === "fast" ? 0.72 : 1.02;
+
+      exercise.midi.forEach((note, i) => {
+        const isLast = i === exercise.midi.length - 1;
+        playTone(ctx, note, melodyStart + i * spacing, isLast ? duration + 0.35 : duration, 0.16);
+      });
+    }
+
+    function formatTone(t) {
+      return t === 7 ? '7̲' : t;
+    }
+
+    function updatePreview() {
+      sequencePreviewEl.textContent = userSequence.length
+        ? userSequence.map(formatTone).join(' – ')
+        : '–';
+    }
+
+    function renderAnswerMode() {
+      const choiceMode = answerModeEl.value === 'choices';
+      choiceAreaEl.style.display = choiceMode ? 'grid' : 'none';
+      clickAreaEl.style.display = choiceMode ? 'none' : 'block';
+
+      if (choiceMode && exercise) {
+        choiceAreaEl.innerHTML = exercise.choices.map((melody, index) => {
+          return `<button class="answerChoice" data-index="${index}" style="border:2px solid var(--border); border-radius:18px; padding:18px; font-size:22px; font-weight:800; background:white; cursor:pointer; margin-bottom:10px;">${melody.map(formatTone).join(' – ')}</button>`;
+        }).join('');
+
+        Array.from(document.querySelectorAll('.answerChoice')).forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (!exercise || answered) return;
+            answered = true;
+
+            const selected = exercise.choices[Number(btn.dataset.index)];
+            const correct = arraysEqual(selected, exercise.melody);
+            score.total += 1;
+            if (correct) score.correct += 1;
+
+            Array.from(document.querySelectorAll('.answerChoice')).forEach((b, i) => {
+              const mel = exercise.choices[i];
+              const isCorrect = arraysEqual(mel, exercise.melody);
+              if (isCorrect) {
+                b.style.background = '#16a34a';
+                b.style.color = 'white';
+              }
+              if (b === btn && !correct) {
+                b.style.background = '#dc2626';
+                b.style.color = 'white';
+              }
+            });
+
+            feedbackEl.className = 'feedback ' + (correct ? 'good' : 'bad');
+            feedbackEl.textContent = correct ? 'Rätt!' : 'Inte riktigt.';
+            hiddenInfoEl.textContent = 'Melodi: ' + exercise.melody.map(formatTone).join(' – ');
+            updateScore();
+          });
+        });
+      }
+    }
+
+    function clearFeedback() {
+      feedbackEl.className = "feedback";
+      feedbackEl.textContent = "";
+    }
+
+    async function newExercise() {
+      exercise = makeExercise();
+      answered = false;
+      userSequence = [];
+      updatePreview();
+      clearFeedback();
+      repeatBtn.disabled = false;
+      hiddenInfoEl.textContent = "Melodin visas efter svar";
+      statusEl.textContent = "Lyssna: tonikaackord, durskala, paus, legato-melodi.";
+      renderAnswerMode();
+      await playExercise();
+    }
+
+    function submitAnswer() {
+      if (!exercise || answered) return;
+      answered = true;
+      const correct = arraysEqual(userSequence.map(String), exercise.melody.map(String));
+      score.total += 1;
+      if (correct) score.correct += 1;
+
+      feedbackEl.className = "feedback " + (correct ? "good" : "bad");
+      feedbackEl.textContent = correct ? "Rätt!" : "Inte riktigt.";
+      hiddenInfoEl.textContent = "Melodi: " + exercise.melody.map(formatTone).join(" – ");
+      statusEl.textContent = "Tryck på Ny uppgift för nästa fråga.";
+      updateScore();
+    }
+
+    function reset() {
+      exercise = null;
+      answered = false;
+      userSequence = [];
+      score = { correct:0, total:0 };
+      repeatBtn.disabled = true;
+      updatePreview();
+      clearFeedback();
+      updateScore();
+      statusEl.textContent = "Tryck på Ny uppgift för att starta";
+      hiddenInfoEl.textContent = "Melodin visas efter svar";
+    }
+
+    function updateScore() {
+      const percent = score.total ? Math.round(score.correct / score.total * 100) : 0;
+      correctEl.textContent = score.correct;
+      totalEl.textContent = score.total;
+      percentEl.textContent = percent + "%";
+    }
+
+    toneButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!exercise || answered) return;
+        const val = btn.dataset.tone;
+        userSequence.push(Number(val));
+        updatePreview();
+      });
+    });
+
+    backBtn.addEventListener("click", () => {
+      if (answered) return;
+      userSequence.pop();
+      updatePreview();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      if (answered) return;
+      userSequence = [];
+      updatePreview();
+    });
+
+    newBtn.addEventListener("click", newExercise);
+    repeatBtn.addEventListener("click", () => playExercise(false));
+    resetBtn.addEventListener("click", reset);
+    submitBtn.addEventListener("click", submitAnswer);
+    answerModeEl.addEventListener("change", renderAnswerMode);
+  </script>
+</body>
+</html>

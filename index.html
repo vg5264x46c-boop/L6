@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Musikappar</title>
+  <style>
+    :root {
+      --bg:#f5f5f4; --card:#fff; --text:#1c1917; --muted:#78716c;
+      --border:#e7e5e4; --accent:#2563eb; --soft:#f1f5f9;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:linear-gradient(135deg,#f8fafc,var(--bg));
+      color:var(--text);
+      min-height:100vh;
+      padding:16px;
+    }
+    main { max-width:980px; margin:0 auto; display:grid; gap:16px; }
+    .card {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:28px;
+      padding:24px;
+      box-shadow:0 10px 25px rgba(0,0,0,.04);
+    }
+    h1 {
+      margin:0;
+      font-size:clamp(34px,7vw,56px);
+      line-height:1.02;
+      letter-spacing:-.05em;
+    }
+    p { color:var(--muted); line-height:1.5; max-width:720px; }
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:14px;
+    }
+    a.app {
+      display:block;
+      text-decoration:none;
+      color:var(--text);
+      background:white;
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:20px;
+      min-height:150px;
+      box-shadow:0 8px 18px rgba(0,0,0,.035);
+      transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    a.app:hover {
+      transform:translateY(-2px);
+      box-shadow:0 12px 24px rgba(0,0,0,.07);
+      border-color:#bfdbfe;
+    }
+    .tag {
+      display:inline-block;
+      background:var(--soft);
+      color:var(--muted);
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:12px;
+    }
+    h2 { margin:0 0 8px; font-size:24px; letter-spacing:-.025em; }
+    .desc { color:var(--muted); font-size:15px; line-height:1.45; }
+    footer {
+      text-align:center;
+      padding:8px 0 2px;
+      color:var(--muted);
+      font-size:12px;
+      font-style:italic;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="card">
+      <div class="tag">Betaversion</div>
+      <h1>Musikappar</h1>
+      <p>
+        Sex små gehörs- och musikteoriappar för webben. Välj en övning nedan.
+        Alla appar fungerar direkt i webbläsaren och kan publiceras med GitHub Pages.
+      </p>
+    </header>
+
+    <section class="grid">
+      <a class="app" href="ackordtoner/">
+        <span class="tag">Ackordtoner</span>
+        <h2>Grundton, ters eller kvint?</h2>
+        <div class="desc">Identifiera vilken funktion en enskild ton har efter ett dur- eller mollackord.</div>
+      </a>
+
+      <a class="app" href="treklanger/">
+        <span class="tag">Treklanger</span>
+        <h2>Dur eller moll?</h2>
+        <div class="desc">Hör om en treklang är dur eller moll, även i öppnare lägen.</div>
+      </a>
+
+      <a class="app" href="fyrklanger/">
+        <span class="tag">Fyrklanger</span>
+        <h2>Vilken fyrklang?</h2>
+        <div class="desc">Identifiera 7, maj7, mollmaj7 och moll7.</div>
+      </a>
+
+      <a class="app" href="intervall/">
+        <span class="tag">Intervall</span>
+        <h2>Grundintervall</h2>
+        <div class="desc">Skilj på sekund, ters, kvart, kvint, sext och septim utan kvalitetskrav.</div>
+      </a>
+
+      <a class="app" href="funktioner/">
+        <span class="tag">Funktioner</span>
+        <h2>Saknad funktion</h2>
+        <div class="desc">Identifiera vilken funktion som saknas i en ackordföljd.</div>
+      </a>
+
+      <a class="app" href="tonplats/">
+        <span class="tag">Tonplats</span>
+        <h2>Tonplatsmelodi</h2>
+        <div class="desc">Identifiera melodier med tonplats 1–5 och 7 som inledningston.</div>
+      </a>
+    </section>
+
+    <footer>Marcus Löfdahl 2026 (genererad av AI)</footer>
+  </main>
+</body>
+</html>

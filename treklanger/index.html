@@ -178,7 +178,7 @@
       <div class="small">Dur/moll-treklang · betaversion</div>
       <h1>Är treklangen dur eller moll?</h1>
       <p>
-        Appen spelar en treklang. Ibland ligger tonerna tätt, ibland mer öppet med oktavförflyttade toner.
+        Appen spelar en treklang. Ibland ligger tonerna tätt (samanträngt), ibland mer öppet (spritt) med oktavförflyttade toner.
         Identifiera om ackordet är dur eller moll.
       </p>
     </header>
@@ -223,9 +223,9 @@
         <label>
           Läge
           <select id="voicingType">
-            <option value="mixed" selected>Blandat: tätt och öppet</option>
-            <option value="closed">Endast tätt läge</option>
-            <option value="open">Endast öppet läge</option>
+            <option value="mixed" selected>Blandat: sammanträngt och spritt läge</option>
+            <option value="closed">Endast sammanträngt läge</option>
+            <option value="open">Endast spritt läge</option>
           </select>
         </label>
       </div>
@@ -436,7 +436,7 @@
 
       const rootName = NOTE_NAMES[exercise.rootPc];
       const qualityName = exercise.quality === "major" ? "dur" : "moll";
-      const voicingName = exercise.voicing === "open" ? "öppet läge" : "tätt läge";
+      const voicingName = exercise.voicing === "open" ? "spritt läge" : "sammanträngt läge";
       const rangeName = rangeTypeEl.value === "alto" ? "alt" : "baryton";
 
       feedbackEl.className = "feedback " + (isCorrect ? "good" : "bad");
